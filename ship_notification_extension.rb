@@ -16,9 +16,6 @@ class ShipNotificationExtension < Spree::Extension
         @from       = Spree::Config[:order_from]
         @bcc        = order_bcc
         @sent_on    = Time.now
-        
-        order.ship_notified = true
-        order.save
       end
     end
 
