@@ -3,20 +3,34 @@
 
 class ShipNotificationExtension < Spree::Extension
   version "1.0"
-  description "Describe your extension here"
-  url "http://yourwebsite.com/ship_notification"
-
-  # Please use ship_notification/config/routes.rb instead for extension routes.
-
-  # def self.require_gems(config)
-  #   config.gem "gemname-goes-here", :version => '1.2.3'
-  # end
+  description "Notify customer that order has shipped."
+  url "http://github.com/azimuth/spree-ship-notification"
   
   def activate
+    OrderMailer.class_eval do
+      def shipped(order, resend = false)
+        @subject    = (resend ? "[RESEND] " : "") 
+        @subject    += Spree::Config[:site_name] + ' ' + 'Order Delivery #' + order.number
+        @body       = {"order" => order}
+        @recipients = order.email
+        @from       = Spree::Config[:order_from]
+        @bcc        = order_bcc
+        @sent_on    = Time.now
+        
+        order.ship_notified = true
+        order.save
+      end
+    end
 
-    # make your helper avaliable in all views
-    # Spree::BaseController.class_eval do
-    #   helper YourHelper
-    # end
+    Order.class_eval do
+      attr_accessor :ship_notified
+      
+      def ship_notification_sent?
+        @ship_notified
+      end
+    end
+    
+    @order_observer = OrderObserver.instance
+    
   end
 end
